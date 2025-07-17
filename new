@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pharmacy Selection for Fifty 410</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fifty410.com/assets/css/main.css">
+  <style>
+    html, body {margin:0; padding:0; height:100%; box-sizing:border-box;}
+    body.f410-body {background-color:#F3F3F3; font-family: 'Montserrat', Arial, sans-serif;}
+    .tab-bar {width:100%; display:flex; background:#FFFFFF; border-bottom:3px solid #6D4C4C; position:sticky; top:0; z-index:1001;}
+    .tab-btn {flex:1; padding:1rem 0; text-align:center; font-size:1.12rem; font-weight:600; background:none; border:none; border-right:1px solid #C9AB81; cursor:pointer; color:#6D4C4C; transition:background 0.15s, color 0.15s; outline:none;}
+    .tab-btn:last-child {border-right:none;}
+    .tab-btn.active {background:#F3F3F3; color:#CB7052;}
+    .tab-panel {display:none; width:100%;}
+    .tab-panel.active {display:block;}
+    .picker-container {width:100%; padding:2rem; padding-bottom:200px; background:#FFFFFF; box-shadow:inset 0 0 0 1000px rgba(255,255,255,0.95); display:flex; flex-direction:column; align-items:center;}
+    .picker-header {font-size:1.75rem; color:#6D4C4C; margin-bottom:1.5rem; font-weight:700;}
+    .f410-table {background:#F3F3F3; width:100%; max-width:960px; border-collapse:separate; border-spacing:0; border:3px solid #6D4C4C; border-radius:8px; overflow:hidden;}
+    .f410-table th, .f410-table td {padding:0.75rem 1rem; border-bottom:1px solid #C9AB81;}
+    .f410-table th {background:#6D4C4C; color:#FFFFFF; font-weight:600;}
+    .f410-table td.output {color:#CB7052; font-weight:600;}
+    .f410-table .quarterly-row {background:#C9AB81; background: linear-gradient(135deg, #C9AB81 0%, rgba(201,171,129,0.3) 100%);}
+    select {padding:0.75rem; border:2px solid #C9AB81; border-radius:6px; width:100%; min-width:150px; font-family:'Montserrat', Arial, sans-serif; background:#FFFFFF;}
+    .dosage-warning {
+      background: linear-gradient(135deg, #CB7052 0%, rgba(203,112,82,0.1) 100%); 
+      border:3px solid #CB7052; 
+      padding:1rem; 
+      margin:1rem 0; 
+      border-radius:8px; 
+      color:#6D4C4C; 
+      font-weight:600;
+      display:none;
+    }
+    #patient-script {position:fixed; bottom:0; left:0; width:100vw; background:#F3F3F3; border-top:3px solid #6D4C4C; box-shadow:0 -4px 20px rgba(109,76,76,0.15); padding:1.5rem 2rem 1.5rem 2rem; z-index:999; font-family:inherit; font-size:1.04rem; display:flex; flex-direction:column; gap:1rem; max-height:35vh; overflow-y:auto;}
+    #patient-script-content {white-space:pre-line; color:#6D4C4C;}
+    #copy-script-btn {align-self:flex-end; background:linear-gradient(90deg,#CB7052 0%,#6D4C4C 100%); color:#FFFFFF; border:none; padding:0.5rem 1.25rem; border-radius:6px; cursor:pointer; font-size:1rem; transition:all 0.2s; font-weight:600;}
+    #copy-script-btn:hover {background:linear-gradient(90deg,#6D4C4C 0%,#CB7052 100%); transform:translateY(-1px); box-shadow:0 4px 12px rgba(109,76,76,0.3);}
+    .charge-instructions {background:#FFFFFF; border:3px solid #CB7052; margin:2rem auto 0 auto; max-width:680px; padding:2rem 2rem 1.5rem 2rem; border-radius:12px; box-shadow:0 6px 25px rgba(203,112,82,0.15); font-size:1.11rem; color:#6D4C4C; line-height:1.6;}
+    .charge-instructions h2 {color:#CB7052; margin-top:0; font-size:1.25rem; letter-spacing:0.02em; font-weight:700;}
+    .charge-instructions table {border:none; width:100%; max-width:480px; margin-top:1.3rem; background:#F3F3F3; border-radius:8px; overflow:hidden; border:2px solid #C9AB81;}
+    .charge-instructions th, .charge-instructions td {border:none;}
+    .ordering-procedure {background:#FFFFFF; border:3px solid #6D4C4C; margin:2rem auto 0 auto; max-width:720px; padding:2.5rem 2rem 2rem 2rem; border-radius:12px; box-shadow:0 6px 25px rgba(109,76,76,0.15); font-size:1.12rem; color:#6D4C4C; line-height:1.7;}
+    .ordering-procedure h2 {color:#CB7052; margin-top:0; font-size:1.22rem; letter-spacing:0.01em; font-weight:700;}
+    .ordering-procedure ol {margin:1.2em 0 1.5em 1em;}
+    .ordering-procedure ul {margin:0.4em 0 1em 1.1em;}
+    .ordering-procedure li {margin-bottom:0.85em;}
+    .ordering-procedure code {background:#C9AB81; background: linear-gradient(135deg, #C9AB81 0%, rgba(201,171,129,0.3) 100%); padding:4px 8px; border-radius:4px; font-size:1em; color:#6D4C4C; font-weight:600;}
+    @media (max-width:600px){
+      .picker-container{padding:0.5rem; padding-bottom:160px;}
+      #patient-script{padding:1rem; font-size:0.95rem;}
+      #copy-script-btn{padding:0.5rem 0.75rem; font-size:0.98rem;}
+      .charge-instructions{padding:1.1rem 0.7rem 1rem 0.7rem; font-size:1rem;}
+      .charge-instructions table{font-size:0.97em;}
+      .ordering-procedure{padding:1.1rem 0.7rem 1rem 0.7rem; font-size:1.01rem;}
+    }
+    body.hide-patient-script #patient-script {display:none !important;}
+    .copytip-input {width:230px; text-align:center; font-size:1rem; margin-left:0.5em; border:1px solid #aac; border-radius:6px; padding:3px 7px; background:#f9f9ff;}
+    .tip-copy-btn {
+      background: linear-gradient(90deg, #CB7052 0%, #6D4C4C 100%);
+      color: #FFFFFF;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'Montserrat', Arial, sans-serif;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(203, 112, 82, 0.25);
+      min-width: 280px;
+      margin: 0.25rem;
+    }
+    .tip-copy-btn:hover {
+      background: linear-gradient(90deg, #6D4C4C 0%, #CB7052 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(203, 112, 82, 0.35);
+    }
+    .tip-copy-btn.copied {
+      background: linear-gradient(90deg, #C9AB81 0%, #6D4C4C 100%) !important;
+      transform: scale(0.98);
+    }
+    .hide {display:none !important;}
+
+  </style>
+</head>
+<body class="f410-body" id="main-body">
+
+
+  <!-- Main App Starts Here -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-pharm-btn" onclick="showTab('pharm')">Pharmacy Selection</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-pharm">
+    <div class="picker-container">
+      <div class="picker-header">Pharmacy Selection for Fifty 410</div>
+      
+      <!-- Quick Templates Section -->
+      <div id="quick-templates" style="background:#FFFFFF; border:2px solid #C9AB81; border-radius:8px; padding:1.5rem; margin-bottom:1.5rem; max-width:960px; width:100%;">
+        <div style="margin-bottom:1rem;">
+          <h3 style="color:#6D4C4C; margin:0; font-size:1.1rem; font-weight:600;">Quick Templates</h3>
+        </div>
+        
+        <div id="templates-container" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem;">
+          <!-- Templates will be dynamically added here -->
+        </div>
+      </div>
+      
+      <!-- Zip Code Lookup Tool -->
+      <div id="zip-lookup-tool" style="background:#FFFFFF; border:2px solid #6D4C4C; border-radius:8px; padding:1.5rem; margin-bottom:1.5rem; max-width:960px; width:100%;">
+        <div style="margin-bottom:1rem;">
+          <h3 style="color:#6D4C4C; margin:0; font-size:1.1rem; font-weight:600;">📍 Zip Code Lookup Tool</h3>
+          <p style="color:#6D4C4C; margin:0.5rem 0 0 0; font-size:0.9rem;">Enter a zip code to automatically set the state and get pharmacy recommendations</p>
+        </div>
+        
+        <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <label for="zip-input" style="color:#6D4C4C; font-weight:600; min-width:70px;">Zip Code:</label>
+            <input type="text" id="zip-input" placeholder="Enter 5-digit zip" maxlength="5" 
+                   style="padding:0.5rem; border:2px solid #C9AB81; border-radius:4px; width:120px; font-family:'Montserrat',Arial,sans-serif;">
+          </div>
+          <button id="zip-lookup-btn" style="
+            background:linear-gradient(90deg,#6D4C4C 0%,#CB7052 100%);
+            color:#FFFFFF; font-weight:600; font-family:'Montserrat',Arial,sans-serif;
+            font-size:0.9rem; padding:0.5rem 1rem; border-radius:4px;
+            border:none; cursor:pointer; transition:all 0.2s;">
+            Lookup State
+          </button>
+          <div id="zip-result" style="color:#6D4C4C; font-weight:600; display:none;">
+            <span id="zip-state-result"></span>
+            <span id="zip-recommendation" style="margin-left:1rem; color:#CB7052;"></span>
+          </div>
+        </div>
+      </div>
+      
+      <div id="dosage-warning" class="dosage-warning">
+        <strong>Note:</strong> 12.5 mg quarterly orders are restricted to the Tirzepatide/Pyridoxine mixture.
+      </div>
+
+      <table class="f410-table">
+        <thead>
+          <tr>
+            <th>Frequency</th>
+            <th>State</th>
+            <th>Medication</th>
+            <th>Strength (mg)</th>
+            <th>Recommended Pharmacy</th>
+            <th>Shipping Location</th>
+            <th>Vial Qty (mL)</th>
+            <th>Units</th>
+            <th>Syringes</th>
+          </tr>
+        </thead>
+        <tbody id="dosage-table-body">
+          <tr id="main-dosage-row">
+            <td><select id="freq"></select></td>
+            <td><select id="state"></select></td>
+            <td><select id="med"></select></td>
+            <td><select id="str"></select></td>
+            <td class="output" id="pharm">—</td>
+            <td class="output" id="loc">—</td>
+            <td class="output" id="qty">—</td>
+            <td class="output" id="units">—</td>
+            <td class="output" id="syr">—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TIPS: Copy medication names as buttons -->
+      <div id="order-tips" style="margin-top:1.5rem; text-align:center;">
+        <div style="font-size:1.05rem; color:#6D4C4C; font-weight:600; margin-bottom:1rem;">
+          Tips for Order Placers - Click to Copy Medication Name:
+        </div>
+        <!-- Semaglutide only -->
+        <div id="casa-sema-tip" class="" style="margin-bottom:0.75rem;">
+          <button class="tip-copy-btn" onclick="copyMedicationName('Semaglutide/Cyanocobalamin (B12)', this)">
+            Casa Pharmacy: Semaglutide/Cyanocobalamin (B12)
+          </button>
+        </div>
+        <div id="strive-sema-tip" class="" style="margin-bottom:0.75rem;">
+          <button class="tip-copy-btn" onclick="copyMedicationName('Semaglutide/Glycine/B12', this)">
+            Strive Pharmacy: Semaglutide/Glycine/B12
+          </button>
+        </div>
+        <!-- Semaglutide 1.5mg special instruction -->
+        <div id="sema-1-5-tip" class="hide" style="margin-bottom:0.75rem;">
+          <button class="tip-copy-btn" onclick="copyMedicationName('Inject 44 units (.44 mL) subcutaneously weekly for 4 weeks', this)">
+            Semaglutide 1.5mg Instructions
+          </button>
+        </div>
+        <!-- Semaglutide 2mg special instruction -->
+        <div id="sema-2-tip" class="hide" style="margin-bottom:0.75rem;">
+          <button class="tip-copy-btn" onclick="copyMedicationName('Inject 40 units (.4 mL) subcutaneously weekly for 4 weeks', this)">
+            Semaglutide 2mg Instructions
+          </button>
+        </div>
+        <!-- Tirzepatide only -->
+        <div id="casa-tirz-c-tip" class="hide" style="margin-bottom:0.75rem;">
+          <button class="tip-copy-btn" onclick="copyMedicationName('Tirzepatide/Cyanocobalamin', this)">
+            Casa Pharmacy (B12): Tirzepatide/Cyanocobalamin
+          </button>
+        </div>
+        <div id="casa-tirz-b6-tip" class="hide" style="margin-bottom:0.75rem;">
+          <button class="tip-copy-btn" onclick="copyMedicationName('Tirzepatide/Pyridoxine', this)">
+            Casa Pharmacy (B6): Tirzepatide/Pyridoxine
+          </button>
+        </div>
+        <div id="strive-tirz-tip" class="hide" style="margin-bottom:0.75rem;">
+          <button class="tip-copy-btn" onclick="copyStriveTirzepatide(this)">
+            Strive Pharmacy: Tirzepatide/Glycine/B12
+          </button>
+        </div>
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.9rem; color: #555; text-align: center;">
+        <strong>Note:</strong> Only use the Quarterly option when the medication is shipped all at once. If selecting Quarterly, ensure the patient has paid the FULL amount of $549 for Semaglutide or $849 for Tirzepatide.
+      </p>
+      <p style="margin-top: 1rem; font-size: 0.9rem; color: #555; text-align: center;">
+        If any changes or corrections are needed, please reach out to Arsenio.
+      </p>
+    </div>
+  </div>
+
+  <!-- Failed Payment Button - Top Left (Only on Pharmacy Tab) -->
+  <div id="failed-payment-section" style="position:fixed; top:80px; left:20px; z-index:1000;">
+    <button id="failed-payment-btn" style="
+      background:linear-gradient(90deg,#CB7052 0%,#6D4C4C 100%);
+      color:#FFFFFF; font-weight:600; font-family:'Montserrat',Arial,sans-serif;
+      font-size:1rem; padding:0.7rem 1.5rem; border-radius:6px;
+      border:none; cursor:pointer; box-shadow:0 4px 15px rgba(203,112,82,0.3);
+      transition:all 0.2s;">Failed Payment</button>
+    <span id="failed-payment-success" style="display:none; margin-left:1em; color:#CB7052; font-weight:600;">
+      Copied!
+    </span>
+  </div>
+
+  <!-- Reset Button - Top Right -->
+  <div style="position:fixed; top:80px; right:20px; z-index:1000;">
+    <button id="reset-btn" style="
+      background:linear-gradient(90deg,#000000 0%,#6D4C4C 100%);
+      color:#FFFFFF; font-weight:600; font-family:'Montserrat',Arial,sans-serif;
+      font-size:1rem; padding:0.7rem 1.5rem; border-radius:6px;
+      border:none; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      transition:all 0.2s;">Reset All</button>
+    <span id="reset-success" style="display:none; margin-left:1em; color:#000000; font-weight:600;">
+      Reset Complete!
+    </span>
+  </div>
+
+  <!-- Failed Card Button - Only on Pharmacy Tab -->
+  <div id="failed-card-section" style="margin-top:1.5rem; text-align:center;">
+    <button id="failed-card-btn" style="
+      background:linear-gradient(90deg,#CB7052 0%,#6D4C4C 100%);
+      color:#FFFFFF; font-weight:600; font-family:'Montserrat',Arial,sans-serif;
+      font-size:1.03rem; padding:0.8rem 1.9rem; border-radius:6px;
+      border:none; cursor:pointer; box-shadow:0 4px 15px rgba(203,112,82,0.25);
+      transition:all 0.2s;">Failed Card</button>
+    <span id="failed-card-copy-success" style="display:none; margin-left:1em; color:#CB7052; font-weight:600;">
+      Copied!
+    </span>
+  </div>
+    </div>
+  </div>
+
+
+
+
+
+  <div id="patient-script">
+    <div id="patient-script-header">
+      <div id="patient-script-title">Patient Communication Script</div>
+      <button onclick="copyPatientScript()" id="copy-script-btn">Copy to Clipboard</button>
+    </div>
+    <div id="patient-script-content"></div>
+  </div>
+
+  <script>
+
+
+    function showTab(tab) {
+      // Since there's only one tab now, always show pharmacy tab
+      document.getElementById('tab-pharm').classList.add('active');
+      document.getElementById('tab-pharm-btn').classList.add('active');
+      var body = document.getElementById('main-body');
+      var failedCardSection = document.getElementById('failed-card-section');
+      var failedPaymentSection = document.getElementById('failed-payment-section');
+      
+      body.classList.remove('hide-patient-script');
+      failedCardSection.style.display = 'block';
+      failedPaymentSection.style.display = 'block';
+    }
+
+    // Dynamic copy option show/hide
+    function updateCopyTips() {
+      const med = document.getElementById('med').value;
+      const freq = document.getElementById('freq').value;
+      
+      // Hide all first
+      document.getElementById('casa-sema-tip').classList.add('hide');
+      document.getElementById('strive-sema-tip').classList.add('hide');
+      document.getElementById('sema-1-5-tip').classList.add('hide');
+      document.getElementById('sema-2-tip').classList.add('hide');
+      document.getElementById('casa-tirz-c-tip').classList.add('hide');
+      document.getElementById('casa-tirz-b6-tip').classList.add('hide');
+      document.getElementById('strive-tirz-tip').classList.add('hide');
+      
+      // Show relevant based on medication and specific conditions
+      if (med === "Semaglutide") {
+        document.getElementById('casa-sema-tip').classList.remove('hide');
+        // Remove Strive option for Semaglutide - only show Casa
+        
+        // Show 1.5mg instruction button if 1.5mg is selected
+        const strength = document.getElementById('str').value;
+        if (strength === '1.5') {
+          document.getElementById('sema-1-5-tip').classList.remove('hide');
+        }
+        // Show 2mg instruction button if 2mg is selected
+        if (strength === '2') {
+          document.getElementById('sema-2-tip').classList.remove('hide');
+        }
+      } else if (med === "Tirzepatide") {
+        // Check if any 12.5mg is selected in quarterly mode
+        const has12_5mg = checkFor12_5mgSelection();
+        
+        if (freq === 'Quarterly' && has12_5mg) {
+          // Only show Pyridoxine option for 12.5mg quarterly
+          document.getElementById('casa-tirz-b6-tip').classList.remove('hide');
+        } else {
+          // Show all Tirzepatide options for non-12.5mg or monthly
+          document.getElementById('casa-tirz-c-tip').classList.remove('hide');
+          document.getElementById('casa-tirz-b6-tip').classList.remove('hide');
+          document.getElementById('strive-tirz-tip').classList.remove('hide');
+        }
+      }
+    }
+    
+    function checkFor12_5mgSelection() {
+      const freq = document.getElementById('freq').value;
+      if (freq !== 'Quarterly') return false;
+      
+      // Check main row
+      if (document.getElementById('str').value === '12.5') {
+        return true;
+      }
+      
+      // Check quarterly rows
+      const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+      for (let select of quarterlySelects) {
+        if (select.value === '12.5') {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+
+    // Global variables and data
+    const pharmacyContacts = {
+      "Casa": "Casa Pharmacy Phone: 877-937-6868 | www.casapharmarx.com",
+      "Strive": "Strive Pharmacy Phone: 855-405-5993 | www.strivepharmacy.com",
+      "Belmar": "Belmar Pharmacy Phone: 800-525-9473 | www.belmarpharmasolutions.com",
+      "Default": ""
+    };
+    const states = [
+      'AL','AK','AZ','AR','CA','CO','CT','DC','DE','FL','GA','HI','IA','ID','IL','IN','KS','KY','LA','MA','MD','ME','MI',
+      'MN','MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH','OK','OR','PA','PR','RI','SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY'
+    ];
+    const semagStr = ['0.25','0.5','1','1.5','2','2.5'];
+    const tirzStr  = ['2.5','5','7.5','10','12.5','15'];
+    const unusable = ['CA','AL','AK','AR','IN','MI','MN','SC'];
+    const florida = ['FL','GA','KS','MD','MS','NE','OH','OK','PR','TN'],
+          tx      = ['TX'],
+          va      = ['NC','NJ','VA','WV'];
+    const semMap   = {
+      '0.25':'.25mg/.5mg/.5mL', '0.5':'.5mg/.5mg/.5mL',
+      '1':'1mg/1mg/.5mL', '1.5':'1.7mg/1mg/.5mL',
+      '2':'2.5mg/1mg/.5mL','2.5':'2.5mg/1mg/.5mL'
+    };
+    const semUnits = { '1.5':'44 units','2':'40 units','2.5':'50 units' };
+    const tirzMap  = {
+      '2.5':'2.5 mg/1 mg/0.5 mL','5':'5 mg/1 mg/0.5 mL',
+      '7.5':'7.5 mg/1 mg/0.5 mL','10':'10 mg/1 mg/0.5 mL',
+      '12.5':'12.5 mg/1 mg/0.5 mL','15':'15 mg/1 mg/0.5 mL'
+    };
+
+    let quarterlyRows = [];
+
+    const freqEl  = document.getElementById('freq'),
+          stateEl = document.getElementById('state'),
+          medEl   = document.getElementById('med'),
+          strEl   = document.getElementById('str'),
+          pharmEl = document.getElementById('pharm'),
+          locEl   = document.getElementById('loc'),
+          qtyEl   = document.getElementById('qty'),
+          unitsEl = document.getElementById('units'),
+          syrEl   = document.getElementById('syr');
+    
+    // Populate Frequency dropdown
+    ['Monthly','Quarterly'].forEach(v => freqEl.add(new Option(v, v)));
+    // Populate Medication dropdown
+    ['', 'Semaglutide', 'Tirzepatide'].forEach(v => medEl.add(new Option(v || '—', v)));
+    // Populate States dropdown (AZ included)
+    stateEl.add(new Option('— Select —', ''));
+    states.forEach(s => stateEl.add(new Option(s, s)));
+
+    function updateStrengthDropdown() {
+      strEl.innerHTML = '<option value="">—</option>';
+      const med = medEl.value;
+      const list = med === 'Semaglutide' ? semagStr : med === 'Tirzepatide' ? tirzStr : [];
+      list.forEach(v => strEl.add(new Option(v, v)));
+      
+      // Update quarterly dropdowns if they exist
+      updateQuarterlyStrengthDropdowns();
+    }
+
+    function updateQuarterlyStrengthDropdowns() {
+      const med = medEl.value;
+      const list = med === 'Semaglutide' ? semagStr : med === 'Tirzepatide' ? tirzStr : [];
+      
+      // Update existing quarterly dropdowns
+      const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+      quarterlySelects.forEach(select => {
+        const currentValue = select.value; // Preserve current selection
+        select.innerHTML = '<option value="">—</option>';
+        list.forEach(v => select.add(new Option(v, v)));
+        
+        // Restore previous selection if it's still valid
+        if (currentValue && list.includes(currentValue)) {
+          select.value = currentValue;
+          updateQuarterlyRowData(select);
+        }
+      });
+    }
+
+    function clearQuarterlyRows() {
+      quarterlyRows.forEach(row => row.remove());
+      quarterlyRows = [];
+    }
+
+    function createQuarterlyRows() {
+      const tbody = document.getElementById('dosage-table-body');
+      const med = medEl.value;
+      
+      // Create Month 2 row
+      const month2Row = document.createElement('tr');
+      month2Row.className = 'quarterly-row';
+      month2Row.innerHTML = `
+        <td>Month 2</td>
+        <td>—</td>
+        <td>—</td>
+        <td><select class="quarterly-strength"></select></td>
+        <td class="output quarterly-pharm">—</td>
+        <td class="output quarterly-loc">—</td>
+        <td class="output quarterly-qty">—</td>
+        <td class="output quarterly-units">—</td>
+        <td class="output quarterly-syr">—</td>
+      `;
+      
+      // Create Month 3 row
+      const month3Row = document.createElement('tr');
+      month3Row.className = 'quarterly-row';
+      month3Row.innerHTML = `
+        <td>Month 3</td>
+        <td>—</td>
+        <td>—</td>
+        <td><select class="quarterly-strength"></select></td>
+        <td class="output quarterly-pharm">—</td>
+        <td class="output quarterly-loc">—</td>
+        <td class="output quarterly-qty">—</td>
+        <td class="output quarterly-units">—</td>
+        <td class="output quarterly-syr">—</td>
+      `;
+      
+      tbody.appendChild(month2Row);
+      tbody.appendChild(month3Row);
+      
+      quarterlyRows.push(month2Row, month3Row);
+      
+      // Populate strength dropdowns for quarterly rows
+      updateQuarterlyStrengthDropdowns();
+      
+      // Add event listeners for quarterly strength changes
+      const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+      quarterlySelects.forEach((select, index) => {
+        select.addEventListener('change', () => {
+          updateQuarterlyRowData(select);
+          updatePatientScript();
+          checkDosageWarning();
+        });
+      });
+      
+      // Auto-populate if main row has Tirzepatide 10, 12.5, or 15
+      autoPopulateHighDoseTirzepatide();
+    }
+
+    function updateQuarterlyRowData(strengthSelect) {
+      const row = strengthSelect.closest('tr');
+      const strength = strengthSelect.value;
+      const med = medEl.value;
+      const state = stateEl.value;
+      
+      if (!strength || !med) {
+        row.querySelector('.quarterly-pharm').textContent = '—';
+        row.querySelector('.quarterly-loc').textContent = '—';
+        row.querySelector('.quarterly-qty').textContent = '—';
+        row.querySelector('.quarterly-units').textContent = '—';
+        row.querySelector('.quarterly-syr').textContent = '—';
+        return;
+      }
+      
+      // All quarterly orders go to Casa
+      let pharmacy = 'Casa';
+      if (med === 'Semaglutide' && semMap[strength]) {
+        pharmacy += '<br>' + semMap[strength];
+      } else if (med === 'Tirzepatide' && tirzMap[strength]) {
+        pharmacy += '<br>' + tirzMap[strength];
+      }
+      
+      row.querySelector('.quarterly-pharm').innerHTML = pharmacy;
+      row.querySelector('.quarterly-loc').textContent = 'Casa (Nationwide)';
+      row.querySelector('.quarterly-qty').textContent = '2';
+      
+      if (med === 'Semaglutide') {
+        row.querySelector('.quarterly-units').textContent = semUnits[strength] || '50 units';
+      } else {
+        row.querySelector('.quarterly-units').textContent = '50 units';
+      }
+      
+      row.querySelector('.quarterly-syr').textContent = 'Included';
+    }
+
+    function checkDosageWarning() {
+      const freq = freqEl.value;
+      const med = medEl.value;
+      const warning = document.getElementById('dosage-warning');
+      
+      let showWarning = false;
+      
+      if (freq === 'Quarterly' && med === 'Tirzepatide') {
+        // Check main row
+        if (strEl.value === '12.5') {
+          showWarning = true;
+        }
+        
+        // Check quarterly rows
+        const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+        quarterlySelects.forEach(select => {
+          if (select.value === '12.5') {
+            showWarning = true;
+          }
+        });
+      }
+      
+      warning.style.display = showWarning ? 'block' : 'none';
+    }
+
+    function autoPopulateHighDoseTirzepatide() {
+      const med = medEl.value;
+      const freq = freqEl.value;
+      const mainStrength = strEl.value;
+      
+      // Auto-populate for quarterly Tirzepatide with high doses (10, 12.5, 15)
+      if (freq === 'Quarterly' && med === 'Tirzepatide' && ['10', '12.5', '15'].includes(mainStrength)) {
+        const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+        quarterlySelects.forEach(select => {
+          select.value = mainStrength;
+          updateQuarterlyRowData(select);
+        });
+        updatePatientScript();
+        checkDosageWarning();
+      }
+      
+      // Auto-populate for quarterly Semaglutide 2.5mg
+      if (freq === 'Quarterly' && med === 'Semaglutide' && mainStrength === '2.5') {
+        const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+        quarterlySelects.forEach(select => {
+          select.value = mainStrength;
+          updateQuarterlyRowData(select);
+        });
+        updatePatientScript();
+        checkDosageWarning();
+      }
+    }
+
+    function handleFrequencyChange() {
+      const freq = freqEl.value;
+      
+      if (freq === 'Quarterly') {
+        createQuarterlyRows();
+      } else {
+        clearQuarterlyRows();
+      }
+      
+      pickPharmacy();
+      checkDosageWarning();
+    }
+
+    // Zip code to state mapping (comprehensive US zip code ranges)
+    const zipToState = {
+      // Alabama
+      35000: 'AL', 36999: 'AL',
+      // Alaska  
+      99500: 'AK', 99999: 'AK',
+      // Arizona
+      85000: 'AZ', 86999: 'AZ',
+      // Arkansas
+      71600: 'AR', 72999: 'AR',
+      // California
+      90000: 'CA', 96999: 'CA',
+      // Colorado
+      80000: 'CO', 81999: 'CO',
+      // Connecticut
+      6000: 'CT', 6999: 'CT',
+      // Delaware
+      19700: 'DE', 19999: 'DE',
+      // District of Columbia
+      20000: 'DC', 20599: 'DC',
+      // Florida
+      32000: 'FL', 34999: 'FL',
+      // Georgia
+      30000: 'GA', 31999: 'GA',
+      // Hawaii
+      96700: 'HI', 96999: 'HI',
+      // Idaho
+      83200: 'ID', 83999: 'ID',
+      // Illinois
+      60000: 'IL', 62999: 'IL',
+      // Indiana
+      46000: 'IN', 47999: 'IN',
+      // Iowa
+      50000: 'IA', 52999: 'IA',
+      // Kansas
+      66000: 'KS', 67999: 'KS',
+      // Kentucky
+      40000: 'KY', 42999: 'KY',
+      // Louisiana
+      70000: 'LA', 71599: 'LA',
+      // Maine
+      3900: 'ME', 4999: 'ME',
+      // Maryland
+      20600: 'MD', 21999: 'MD',
+      // Massachusetts
+      1000: 'MA', 2799: 'MA',
+      // Michigan
+      48000: 'MI', 49999: 'MI',
+      // Minnesota
+      55000: 'MN', 56999: 'MN',
+      // Mississippi
+      38600: 'MS', 39999: 'MS',
+      // Missouri
+      63000: 'MO', 65999: 'MO',
+      // Montana
+      59000: 'MT', 59999: 'MT',
+      // Nebraska
+      68000: 'NE', 69999: 'NE',
+      // Nevada
+      89000: 'NV', 89999: 'NV',
+      // New Hampshire
+      3000: 'NH', 3899: 'NH',
+      // New Jersey
+      7000: 'NJ', 8999: 'NJ',
+      // New Mexico
+      87000: 'NM', 88999: 'NM',
+      // New York
+      10000: 'NY', 14999: 'NY',
+      // North Carolina
+      27000: 'NC', 28999: 'NC',
+      // North Dakota
+      58000: 'ND', 58999: 'ND',
+      // Ohio
+      43000: 'OH', 45999: 'OH',
+      // Oklahoma
+      73000: 'OK', 74999: 'OK',
+      // Oregon
+      97000: 'OR', 97999: 'OR',
+      // Pennsylvania
+      15000: 'PA', 19699: 'PA',
+      // Puerto Rico
+      600: 'PR', 999: 'PR',
+      // Rhode Island
+      2800: 'RI', 2999: 'RI',
+      // South Carolina
+      29000: 'SC', 29999: 'SC',
+      // South Dakota
+      57000: 'SD', 57999: 'SD',
+      // Tennessee
+      37000: 'TN', 38599: 'TN',
+      // Texas ranges handled separately in function
+      // Utah
+      84000: 'UT', 84999: 'UT',
+      // Vermont
+      5000: 'VT', 5999: 'VT',
+      // Virginia
+      20100: 'VA', 24699: 'VA',
+      // Washington
+      98000: 'WA', 99499: 'WA',
+      // West Virginia
+      24700: 'WV', 26999: 'WV',
+      // Wisconsin
+      53000: 'WI', 54999: 'WI',
+      // Wyoming
+      82000: 'WY', 83199: 'WY'
+    };
+
+    function lookupZipCode(zip) {
+      const zipNum = parseInt(zip);
+      if (isNaN(zipNum) || zip.length !== 5) {
+        return null;
+      }
+
+      // Texas has multiple zip code ranges
+      if ((zipNum >= 75000 && zipNum <= 79999) || 
+          (zipNum >= 77000 && zipNum <= 77999) || 
+          (zipNum >= 73301 && zipNum <= 73344) ||
+          (zipNum >= 88500 && zipNum <= 88599)) {
+        return 'TX';
+      }
+
+      // Find the state by checking other zip code ranges
+      const zipRanges = Object.keys(zipToState);
+      for (let i = 0; i < zipRanges.length; i += 2) {
+        const rangeStart = parseInt(zipRanges[i]);
+        const rangeEnd = parseInt(zipRanges[i + 1]);
+        if (zipNum >= rangeStart && zipNum <= rangeEnd) {
+          return zipToState[zipRanges[i]];
+        }
+      }
+      return null;
+    }
+
+    function getPharmacyRecommendation(state, medication) {
+      if (!state || !medication) return '';
+      
+      if (medication === 'Semaglutide') {
+        return 'Recommended: Casa Pharmacy';
+      }
+      
+      if (medication === 'Tirzepatide') {
+        if (unusable.includes(state)) {
+          return 'Recommended: Casa Pharmacy (Strive not available in this state)';
+        } else {
+          return 'Recommended: Strive Pharmacy (monthly) or Casa Pharmacy (quarterly)';
+        }
+      }
+      
+      return '';
+    }
+
+    // Initialize zip lookup functionality
+    function initializeZipLookup() {
+      const zipInput = document.getElementById('zip-input');
+      const zipButton = document.getElementById('zip-lookup-btn');
+      const zipResult = document.getElementById('zip-result');
+      const zipStateResult = document.getElementById('zip-state-result');
+      const zipRecommendation = document.getElementById('zip-recommendation');
+
+      zipButton.addEventListener('click', function() {
+        const zip = zipInput.value.trim();
+        if (zip.length !== 5) {
+          alert('Please enter a valid 5-digit zip code');
+          return;
+        }
+
+        const state = lookupZipCode(zip);
+        if (state) {
+          // Auto-populate the state dropdown
+          stateEl.value = state;
+          
+          // Show result
+          zipStateResult.textContent = `State: ${state}`;
+          
+          // Get recommendation based on current medication selection
+          const currentMed = medEl.value;
+          const recommendation = getPharmacyRecommendation(state, currentMed);
+          zipRecommendation.textContent = recommendation;
+          
+          zipResult.style.display = 'block';
+          
+          // Trigger pharmacy selection update
+          pickPharmacy();
+          
+          // Show success feedback
+          zipButton.textContent = 'Found!';
+          zipButton.style.background = 'linear-gradient(90deg,#C9AB81 0%,#6D4C4C 100%)';
+          setTimeout(() => {
+            zipButton.textContent = 'Lookup State';
+            zipButton.style.background = 'linear-gradient(90deg,#6D4C4C 0%,#CB7052 100%)';
+          }, 2000);
+        } else {
+          alert('Zip code not found. Please check the zip code and try again.');
+          zipResult.style.display = 'none';
+        }
+      });
+
+      // Allow Enter key to trigger lookup
+      zipInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          zipButton.click();
+        }
+      });
+
+      // Only allow numbers in zip input
+      zipInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        if (zipResult.style.display === 'block') {
+          zipResult.style.display = 'none';
+        }
+      });
+    }
+
+    medEl.addEventListener('change', () => {
+      updateStrengthDropdown();
+      pickPharmacy();
+      updateOrderTips();
+      updateCopyTips();
+      checkDosageWarning();
+    });
+    
+    freqEl.addEventListener('change', handleFrequencyChange);
+    strEl.addEventListener('change', () => {
+      pickPharmacy();
+      checkDosageWarning();
+      updateCopyTips();
+      
+      // Auto-populate quarterly rows if high-dose Tirzepatide is selected
+      if (freqEl.value === 'Quarterly') {
+        autoPopulateHighDoseTirzepatide();
+      }
+    });
+    stateEl.addEventListener('change', pickPharmacy);
+
+    function pickPharmacy() {
+      const freq = freqEl.value,
+            st   = stateEl.value,
+            md   = medEl.value,
+            val  = strEl.value,
+            mg   = parseFloat(val);
+
+      // Route everything to Casa Pharmacy for Semaglutide
+      if (md === 'Semaglutide') {
+        let label = 'Casa';
+        if (semMap[val]) label += '<br>' + semMap[val];
+        pharmEl.innerHTML = label;
+        locEl.textContent = 'Casa (Nationwide)';
+        qtyEl.textContent = (freq === 'Quarterly') ? 2 : 2;
+        unitsEl.textContent = semUnits[val] || '50 units';
+        syrEl.textContent = 'Included';
+        updatePatientScript();
+        return;
+      }
+
+      if (freq === 'Quarterly') {
+        let label = 'Casa';
+        if (md === 'Tirzepatide' && tirzMap[val])    label += '<br>' + tirzMap[val];
+        pharmEl.innerHTML = label;
+        locEl.textContent = 'Casa (Nationwide)';
+        qtyEl.textContent = 2;
+        unitsEl.textContent = '50 units';
+        syrEl.textContent = 'Included';
+        updatePatientScript();
+        return;
+      }
+      
+      if (!st || !md || (!mg && mg !== 0)) {
+        [pharmEl, locEl, qtyEl, unitsEl, syrEl].forEach(e => e.textContent = '—');
+        updatePatientScript();
+        return;
+      }
+      
+      let pharmacy = 'Casa',
+          location = 'Casa (Nationwide)',
+          qty      = 2,
+          units    = '50 units',
+          syr      = 'Included';
+
+      if (!unusable.includes(st) && md === 'Tirzepatide') {
+        pharmacy = 'Strive 10 mg/5 mg/500 mcg/mL';
+        if (florida.includes(st))  location = 'Tampa, FL';
+        else if (tx.includes(st))  location = 'San Antonio, TX';
+        else if (va.includes(st))  location = 'Leesburg, VA';
+        else                       location = 'Gilbert, AZ';
+        const i = tirzStr.indexOf(val);
+        qty   = [1,2,3,4,6,6][i];
+        units = [25,50,75,100,125,150][i] + ' units';
+        syr = parseInt(units) > 30 ? '10 syringes (100 units)' : '10 syringes (30 units)';
+      }
+      else if (md === 'Tirzepatide' && tirzMap[val]) {
+        pharmacy = 'Casa<br>' + tirzMap[val];
+      }
+
+      pharmEl.innerHTML = pharmacy;
+      locEl.textContent = location;
+      qtyEl.textContent  = qty;
+      unitsEl.textContent = units;
+      syrEl.textContent  = syr;
+      updatePatientScript();
+    }
+
+    // Reset function
+    function resetAllSelections() {
+      // Reset all main dropdowns
+      freqEl.selectedIndex = 0;
+      stateEl.selectedIndex = 0;
+      medEl.selectedIndex = 0;
+      strEl.selectedIndex = 0;
+      
+      // Clear all output fields
+      pharmEl.textContent = '—';
+      locEl.textContent = '—';
+      qtyEl.textContent = '—';
+      unitsEl.textContent = '—';
+      syrEl.textContent = '—';
+      
+      // Clear quarterly rows
+      clearQuarterlyRows();
+      
+      // Hide warning
+      document.getElementById('dosage-warning').style.display = 'none';
+      
+      // Hide all copy tips
+      document.getElementById('casa-sema-tip').classList.add('hide');
+      document.getElementById('strive-sema-tip').classList.add('hide');
+      document.getElementById('sema-1-5-tip').classList.add('hide');
+      document.getElementById('sema-2-tip').classList.add('hide');
+      document.getElementById('casa-tirz-c-tip').classList.add('hide');
+      document.getElementById('casa-tirz-b6-tip').classList.add('hide');
+      document.getElementById('strive-tirz-tip').classList.add('hide');
+      
+      // Clear patient script
+      document.getElementById('patient-script-content').textContent = '';
+      
+      // Show success message
+      document.getElementById('reset-success').style.display = 'inline';
+      setTimeout(() => {
+        document.getElementById('reset-success').style.display = 'none';
+      }, 2000);
+    }
+
+    // Quick Templates System
+    let savedTemplates = [
+      {
+        id: 1,
+        name: "Semaglutide Starter",
+        frequency: "Quarterly",
+        state: "TX", // Default state, can be changed when loaded
+        medication: "Semaglutide",
+        strength: "0.25",
+        quarterlyData: [
+          { month: 2, strength: "0.5" },
+          { month: 3, strength: "1" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Tirzepatide Starter",
+        frequency: "Quarterly",
+        state: "TX", // Default state, can be changed when loaded
+        medication: "Tirzepatide",
+        strength: "2.5",
+        quarterlyData: [
+          { month: 2, strength: "5" },
+          { month: 3, strength: "7.5" }
+        ]
+      }
+    ];
+
+    function saveCurrentAsTemplate() {
+      const freq = freqEl.value;
+      const state = stateEl.value;
+      const med = medEl.value;
+      const str = strEl.value;
+      
+      if (!freq || !state || !med || !str) {
+        alert('Please complete all main selections before saving as template.');
+        return;
+      }
+      
+      const templateName = prompt('Enter a name for this template:');
+      if (!templateName) return;
+      
+      const template = {
+        id: Date.now() + Math.random(), // Ensure unique ID
+        name: templateName,
+        frequency: freq,
+        state: state,
+        medication: med,
+        strength: str,
+        quarterlyData: []
+      };
+      
+      // Save quarterly data if applicable
+      if (freq === 'Quarterly') {
+        const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+        quarterlySelects.forEach((select, index) => {
+          template.quarterlyData.push({
+            month: index + 2,
+            strength: select.value
+          });
+        });
+      }
+      
+      savedTemplates.push(template);
+      renderTemplates();
+    }
+
+    function loadTemplate(templateId) {
+      const template = savedTemplates.find(t => t.id === templateId);
+      if (!template) return;
+      
+      // Load main selections
+      freqEl.value = template.frequency;
+      stateEl.value = template.state;
+      medEl.value = template.medication;
+      
+      // Update strength dropdown and set value
+      updateStrengthDropdown();
+      strEl.value = template.strength;
+      
+      // Handle quarterly if applicable
+      if (template.frequency === 'Quarterly') {
+        handleFrequencyChange();
+        
+        // Wait for quarterly rows to be created, then populate them
+        setTimeout(() => {
+          const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+          template.quarterlyData.forEach((data, index) => {
+            if (quarterlySelects[index]) {
+              quarterlySelects[index].value = data.strength;
+              updateQuarterlyRowData(quarterlySelects[index]);
+            }
+          });
+          updatePatientScript();
+          checkDosageWarning();
+          updateCopyTips();
+        }, 100);
+      }
+      
+      // Update everything
+      pickPharmacy();
+      updateCopyTips();
+    }
+
+    function deleteTemplate(templateId) {
+      if (confirm('Are you sure you want to delete this template?')) {
+        savedTemplates = savedTemplates.filter(t => t.id !== templateId);
+        renderTemplates();
+      }
+    }
+
+    function clearAllTemplates() {
+      if (confirm('Are you sure you want to delete ALL templates? This cannot be undone.')) {
+        savedTemplates = [];
+        renderTemplates();
+      }
+    }
+
+    function renderTemplates() {
+      const container = document.getElementById('templates-container');
+      
+      container.innerHTML = '';
+      
+      savedTemplates.forEach(template => {
+        const templateCard = document.createElement('div');
+        templateCard.style.cssText = `
+          background: linear-gradient(135deg, #F3F3F3 0%, #FFFFFF 100%);
+          border: 2px solid #C9AB81;
+          border-radius: 6px;
+          padding: 1rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          position: relative;
+        `;
+        
+        templateCard.innerHTML = `
+          <div style="font-weight:600; color:#6D4C4C; font-size:1rem; margin-bottom:0.5rem;">
+            ${template.name}
+            ${(template.id === 1 || template.id === 2) ? 
+              '<span style="background:#CB7052; color:#FFFFFF; padding:2px 6px; border-radius:3px; font-size:0.75rem; margin-left:0.5rem;">Default</span>' : ''}
+          </div>
+          <div style="color:#6D4C4C; font-size:0.85rem; line-height:1.4;">
+            <div><strong>Frequency:</strong> ${template.frequency}</div>
+            <div><strong>State:</strong> ${template.state}</div>
+            <div><strong>Medication:</strong> ${template.medication}</div>
+            <div><strong>Month 1:</strong> ${template.strength} mg</div>
+            ${template.quarterlyData.length > 0 ? 
+              template.quarterlyData.map(d => `<div><strong>Month ${d.month}:</strong> ${d.strength} mg</div>`).join('') : ''}
+          </div>
+          ${(template.id !== 1 && template.id !== 2) ? 
+            `<button onclick="deleteTemplate(${template.id})" style="
+              position:absolute; top:0.5rem; right:0.5rem;
+              background:#000000; color:#FFFFFF; border:none;
+              width:20px; height:20px; border-radius:50%; cursor:pointer;
+              font-size:12px; display:flex; align-items:center; justify-content:center;">×</button>` : ''}
+        `;
+        
+        templateCard.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'BUTTON') {
+            loadTemplate(template.id);
+          }
+        });
+        
+        templateCard.addEventListener('mouseenter', () => {
+          templateCard.style.transform = 'translateY(-2px)';
+          templateCard.style.boxShadow = '0 4px 15px rgba(203,112,82,0.2)';
+        });
+        
+        templateCard.addEventListener('mouseleave', () => {
+          templateCard.style.transform = 'translateY(0)';
+          templateCard.style.boxShadow = 'none';
+        });
+        
+        container.appendChild(templateCard);
+      });
+    }
+
+    // Copy Strive Tirzepatide function with conditional text
+    function copyStriveTirzepatide(buttonElement) {
+      const strength = getCurrentStrength();
+      const freq = getCurrentFrequency();
+      
+      let medicationText;
+      if (freq === 'Monthly' && (strength === '12.5' || strength === '15')) {
+        medicationText = '10mg/5mg/500mcg/ml 3mL';
+      } else {
+        medicationText = 'Tirzepatide/Glycine/B12';
+      }
+      
+      navigator.clipboard.writeText(medicationText).then(() => {
+        // Show success feedback
+        const originalText = buttonElement.textContent;
+        buttonElement.textContent = "Copied!";
+        buttonElement.classList.add('copied');
+        
+        setTimeout(() => {
+          buttonElement.textContent = originalText;
+          buttonElement.classList.remove('copied');
+        }, 1500);
+      }).catch(err => {
+        // Fallback for older browsers
+        console.log('Copy failed, trying fallback method');
+        const textArea = document.createElement('textarea');
+        textArea.value = medicationText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          const originalText = buttonElement.textContent;
+          buttonElement.textContent = "Copied!";
+          buttonElement.classList.add('copied');
+          
+          setTimeout(() => {
+            buttonElement.textContent = originalText;
+            buttonElement.classList.remove('copied');
+          }, 1500);
+        } catch (err) {
+          console.error('Copy failed:', err);
+        }
+        document.body.removeChild(textArea);
+      });
+    }
+
+    // Copy medication name function
+    function copyMedicationName(medicationName, buttonElement) {
+      navigator.clipboard.writeText(medicationName).then(() => {
+        // Show success feedback
+        const originalText = buttonElement.textContent;
+        buttonElement.textContent = "Copied!";
+        buttonElement.classList.add('copied');
+        
+        setTimeout(() => {
+          buttonElement.textContent = originalText;
+          buttonElement.classList.remove('copied');
+        }, 1500);
+      }).catch(err => {
+        // Fallback for older browsers
+        console.log('Copy failed, trying fallback method');
+        const textArea = document.createElement('textarea');
+        textArea.value = medicationName;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          const originalText = buttonElement.textContent;
+          buttonElement.textContent = "Copied!";
+          buttonElement.classList.add('copied');
+          
+          setTimeout(() => {
+            buttonElement.textContent = originalText;
+            buttonElement.classList.remove('copied');
+          }, 1500);
+        } catch (err) {
+          console.error('Copy failed:', err);
+        }
+        document.body.removeChild(textArea);
+      });
+    }
+
+    function updateOrderTips() {
+      // This function can be kept for any future dynamic updates if needed
+    }
+
+    window.addEventListener('DOMContentLoaded', function(){
+      updateOrderTips();
+      updateCopyTips();
+    });
+
+    // Patient script functions
+    const shipmentLine = "Please allow up to 2-7 business days for your medication to be processed and shipped. Tracking details will be sent to your email and will appear in your patient portal once available.";
+    
+    const pharmacyMessages = {
+      "Casa": `
+Hello,
+Your prescription has been sent to Casa Pharmacy.
+{contact}
+
+${shipmentLine}
+
+When Your Medication Arrives:
+Read all provided instructions carefully before using.
+If you have any questions, feel free to contact us or your physician.
+
+Order issues:
+If you experience any issues with your delivered order, please report them to us within 3 days of delivery. This will allow us to address the matter promptly and ensure you receive the support you need. Please take photos of all contents received, including the box, packing slip and submit to our team as soon as possible.
+
+Medication Instructions
+Medication Prescribed: {med}
+{dosageInstructions}
+
+Note: Be sure to verify the number of units to pull up in your syringe with each new order. We use a variety of concentrations, which can increase or decrease the number of units to achieve your dose in mg.
+THE DOSAGE TO INJECT WILL BE MENTIONED ON THE MEDICATION VIAL. DO NOT inject the whole vial!
+
+Important Storage Information:
+Your medication needs to be refrigerated. Please store it in the refrigerator to maintain its effectiveness.
+
+Refill Process:
+You will receive a Monthly Check-In Form two weeks after your medication has been delivered. This form is required to begin the prescription refill process. If you do not receive it, please respond to this message and we will assist you further.
+
+When to Seek Medical Help:
+🔔 Important Note: Fifty410 does not provide emergency medical services. 
+If you experience any of these symptoms, seek immediate medical help:
+Severe allergic reactions, shortness of breath, chest pain, trouble swallowing, or blurry vision.
+Go to Urgent Care or the Emergency Room, or call 911.
+
+Feel free to reach out to us by texting this number if you have any questions or concerns. We recommend saving this number in your phone for convenience. We're here to help!
+
+You can visit our Fifty410 Support page for additional information here: https://support.fifty410.com/en/
+      `,
+      "Strive": `
+Hello,
+Your prescription has been sent to Strive Pharmacy.
+{contact}
+
+${shipmentLine}
+
+When Your Medication Arrives:
+Read all provided instructions carefully before using.
+If you have any questions, feel free to contact us or your physician.
+
+Order issues:
+If you experience any issues with your delivered order, please report them to us within 3 days of delivery. Please take photos of the box, packing slip, and all contents received, and submit these to our support team promptly.
+
+Medication Instructions
+Medication Prescribed: {med}
+{dosageInstructions}
+
+Note: Double check the units to inject as each order may come in a different concentration. Only inject the amount indicated for your prescribed dose, never the entire vial.
+
+Storage:
+Refrigerate your medication as soon as it arrives.
+
+Refills:
+You will receive a Monthly Check-In Form two weeks after your medication is delivered. Complete this form to begin your refill process. If you do not receive it, please reply to this message.
+
+When to Seek Medical Help:
+🔔 Important: For any signs of allergic reaction, severe pain, or difficulty breathing, seek immediate medical care or call 911.
+
+Text us any time if you need help or have questions.
+
+Support: https://support.fifty410.com/en/
+      `,
+      "Belmar": `
+Hello,
+Your prescription has been sent to Belmar Pharmacy.
+{contact}
+
+${shipmentLine}
+
+When Your Medication Arrives:
+Read all provided instructions carefully before using.
+If you have any questions, feel free to contact us or your physician.
+
+Order issues:
+If anything is missing or damaged in your order, please notify us within 3 days of delivery, and send photos of the box, contents, and packing slip to our support team.
+
+Medication Instructions
+Medication Prescribed: {med}
+{dosageInstructions}
+
+Important: Do not inject more than the prescribed amount. The number of units can vary by order and concentration. Read your vial label each time.
+
+Storage:
+Store your medication in the refrigerator immediately upon arrival.
+
+Refill Process:
+You'll receive a Monthly Check-In Form two weeks after delivery to begin your refill process. If not, just reply to this message.
+
+If you have any urgent symptoms such as shortness of breath, severe pain, or swelling, call 911 or seek immediate care.
+
+For support: https://support.fifty410.com/en/
+      `,
+      "Default": `
+Hello,
+Your prescription has been sent to the pharmacy.
+
+${shipmentLine}
+
+Medication Instructions
+Medication Prescribed: {med}
+{dosageInstructions}
+
+Read all medication instructions carefully before using.
+
+For questions or issues, contact our support team: https://support.fifty410.com/en/
+      `
+    };
+
+    function getCurrentPharmacyLabel() {
+      let el = document.getElementById('pharm');
+      let html = el.innerHTML.replace(/<br>/g, " ");
+      let label = html.trim() !== "—" ? html.replace(/<.*?>/g, '').trim() : "";
+      if (!label) return "Default";
+      if (/strive/i.test(label)) return "Strive";
+      if (/casa/i.test(label)) return "Casa";
+      if (/belmar/i.test(label)) return "Belmar";
+      return "Default";
+    }
+
+    function getCurrentMedication() {
+      let med = document.getElementById('med');
+      return med.options[med.selectedIndex].value || "";
+    }
+
+    function getCurrentStrength() {
+      let str = document.getElementById('str');
+      return str.options[str.selectedIndex].value || "";
+    }
+
+    function getCurrentUnits() {
+      let units = document.getElementById('units');
+      return units.textContent.trim() !== "—" ? units.textContent.trim() : "";
+    }
+
+    function getCurrentDose() {
+      let strength = getCurrentStrength();
+      return strength ? strength + " mg" : "";
+    }
+
+    function getCurrentFrequency() {
+      let freq = document.getElementById('freq');
+      return freq.options[freq.selectedIndex].value || "";
+    }
+
+    function getQuarterlyDosages() {
+      const freq = getCurrentFrequency();
+      if (freq !== 'Quarterly') return null;
+      
+      const dosages = [];
+      
+      // Month 1 (main row)
+      const mainStrength = getCurrentStrength();
+      const mainUnits = getCurrentUnits();
+      if (mainStrength && mainUnits && mainUnits !== "[Units to Inject]") {
+        dosages.push({
+          month: 1,
+          dose: mainStrength + " mg",
+          units: mainUnits
+        });
+      }
+      
+      // Quarterly rows (Month 2 & 3)
+      const quarterlySelects = document.querySelectorAll('.quarterly-strength');
+      quarterlySelects.forEach((select, index) => {
+        const strength = select.value;
+        if (strength) {
+          const row = select.closest('tr');
+          const units = row.querySelector('.quarterly-units').textContent.trim();
+          if (units && units !== "—") {
+            dosages.push({
+              month: index + 2,
+              dose: strength + " mg",
+              units: units
+            });
+          }
+        }
+      });
+      
+      return dosages;
+    }
+
+    function updatePatientScript() {
+      let pharmacyKey = getCurrentPharmacyLabel();
+      let med = getCurrentMedication() || "[Medication]";
+      let freq = getCurrentFrequency();
+      let contact = pharmacyContacts[pharmacyKey] ? "\n" + pharmacyContacts[pharmacyKey] : "";
+      
+      let dosageInstructions = "";
+      
+      if (freq === 'Quarterly') {
+        const dosages = getQuarterlyDosages();
+        if (dosages && dosages.length > 0) {
+          dosageInstructions = "Treatment Plan:\n";
+          dosages.forEach(dosage => {
+            dosageInstructions += `Month ${dosage.month}: ${dosage.dose} - Inject ${dosage.units} once weekly for four weeks.\n`;
+          });
+        } else {
+          dosageInstructions = "Prescribed Dose: [Please complete all dosage selections]\nHow much to inject: [Pending dosage selection]";
+        }
+      } else {
+        // Monthly dosing
+        let dose = getCurrentDose() || "[Dose]";
+        let units = getCurrentUnits() || "[Units to Inject]";
+        let freqLine = "";
+        if (freq === "Monthly" && units && units !== "[Units to Inject]") {
+          freqLine = `\nInject ${units} once weekly for four weeks.`;
+        }
+        dosageInstructions = `Prescribed Dose: ${dose}\nHow much to inject: ${units}${freqLine}`;
+      }
+      
+      let template = pharmacyMessages[pharmacyKey] || pharmacyMessages["Default"];
+      let script = template
+        .replace("{med}", med)
+        .replace("{dosageInstructions}", dosageInstructions)
+        .replace("{contact}", contact);
+      
+      document.getElementById('patient-script-content').textContent = script;
+    }
+
+    function copyPatientScript() {
+      let txt = document.getElementById('patient-script-content').textContent;
+      navigator.clipboard.writeText(txt).then(() => {
+        let btn = document.getElementById('copy-script-btn');
+        let old = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => { btn.textContent = old; }, 1500);
+      });
+    }
+
+    // Template button event listeners - removed
+
+    // Reset button functionality
+    document.getElementById('reset-btn').onclick = function() {
+      resetAllSelections();
+    };
+
+    // Failed payment button functionality
+    document.getElementById('failed-payment-btn').onclick = function() {
+      const msg = `Hi there — great news! You've been approved for your medication, but your card didn't go through. Please use the payment link we sent to update your info so we can process your order. We're excited to get you started on your weight loss journey!`;
+      navigator.clipboard.writeText(msg).then(function() {
+        document.getElementById('failed-payment-success').style.display = 'inline';
+        setTimeout(function() {
+          document.getElementById('failed-payment-success').style.display = 'none';
+        }, 1500);
+      });
+    };
+
+    // Failed card button
+    document.getElementById('failed-card-btn').onclick = function() {
+      const msg = `Hi! This is fifty 410, you're approved for your medication! It looks like your card was declined. Please use the pay link we sent you so we can update your information and process your payment. We're excited to get you started on your weight loss journey. Let us know if you have any questions.`;
+      navigator.clipboard.writeText(msg).then(function() {
+        document.getElementById('failed-card-copy-success').style.display = 'inline';
+        setTimeout(function() {
+          document.getElementById('failed-card-copy-success').style.display = 'none';
+        }, 1400);
+      });
+    };
+
+    // Initialize
+    updateStrengthDropdown();
+    pickPharmacy();
+    renderTemplates();
+    initializeZipLookup();
+  </script>
+</body>
+</html>
