@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stripe Payments Dashboard</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    th { background: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>Stripe Payments</h1>
+  <table id="payments-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Patients Address</th>
+        <th>State</th>
+        <th>Program Number</th>
+        <th>Invoice Closed</th>
+        <th>Order Placed By</th>
+        <th>Prescriber</th>
+        <th>Comments</th>
+        <th>Stripe Invoice</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadPayments() {
+      const res = await fetch('/api/stripe-payments');
+      const payments = await res.json();
+      const tbody = document.querySelector('#payments-table tbody');
+      payments.forEach(p => {
+        const tr = document.createElement('tr');
+        const link = p.stripeInvoice ? `<a href="${p.stripeInvoice}" target="_blank">View</a>` : '';
+        tr.innerHTML = `
+          <td>${p.name}</td>
+          <td>${p.email}</td>
+          <td>${p.patientAddress}</td>
+          <td>${p.state}</td>
+          <td>${p.programNumber}</td>
+          <td>${p.invoiceClosed}</td>
+          <td>${p.orderPlacedBy}</td>
+          <td>${p.prescriber}</td>
+          <td>${p.comments}</td>
+          <td>${link}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadPayments();
+  </script>
+</body>
+</html>
